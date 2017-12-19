@@ -1,0 +1,32 @@
+{
+  "name": "cls-tls",
+  "version": "0.1.0",
+  "description": "make cls works with a selected set of tls functions",
+  "main": "shim.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "tap test/*.tap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/binyuanchen/cls-tls.git"
+  },
+  "author": "Binyuan Chen <binyuanchen@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/binyuanchen/cls-tls/issues"
+  },
+  "homepage": "https://github.com/binyuanchen/cls-tls#readme",
+  "peerDependencies": {
+    "continuation-local-storage": "^3.0.0"
+  },
+  "devDependencies": {
+    "tap": "~0.4.4",
+    "continuation-local-storage": "^3.0.0"
+  },
+  "dependencies": {
+    "shimmer": "^1.0.0"
+  }
+}
