@@ -9,9 +9,9 @@ function slice(args) {
 }
 
 exports = module.exports = function patchTls(ns) {
-    var tls = require('tls');
-    var proto = tls && tls.TLSSocket && tls.TLSSocket.prototype;
-    shimmer.massWrap([proto], ['connect', 'write', 'on', 'destroy'], function (captured) {
+    var net = require('net');
+    var proto = net && net.Socket && net.Socket.prototype;
+    shimmer.massWrap([proto], ['write', 'on'], function (captured) {
         return function wrapped() {
             var args = slice(arguments);
             var last = args.length - 1;
