@@ -22,11 +22,14 @@ ns.run(function () {
 });
 ```
 
-which should log
+, which should log this
 
 ```js
 'client sent data: 1 for request: 1'
 ```
+
+For more completed example please see test/client_patch.tap.js file.
+
 ### Tests
 
 Run
@@ -41,8 +44,6 @@ The tests assume a TLS socket server is running already via
 cd test
 node TlsServer.js
 ```
-
-More completed example please see test/client_patch.tap.js file.
 
 The server key and cert files under /test were generated before (running above TLS server) using
 
