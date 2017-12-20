@@ -3,7 +3,7 @@
 var test = require('tap').test;
 
 test("cls + tls without cls-tls patch", function (t) {
-    t.plan(40);
+    t.plan(50);
 
     var fs = require('fs');
 
@@ -43,6 +43,7 @@ test("cls + tls without cls-tls patch", function (t) {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
+                    t.equal(rid, responseData, 'id in context and received data must equal');
                     // console.log('client got data: ' + responseData + ' for request: ' + rid);
                     tlsSocket.end();
                 });
@@ -65,7 +66,7 @@ test("cls + tls without cls-tls patch", function (t) {
 
 
 test("cls + tls with cls-tls patch", function (t) {
-    t.plan(40);
+    t.plan(60);
 
     var fs = require('fs');
 
@@ -107,6 +108,7 @@ test("cls + tls with cls-tls patch", function (t) {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
+                    t.equal(rid, responseData, 'id in context and received data must equal');
                     // console.log('client got data: ' + responseData + ' for request: ' + rid);
                     tlsSocket.end();
                 });
@@ -115,6 +117,7 @@ test("cls + tls with cls-tls patch", function (t) {
                     // after patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'after patch, write cb works');
+                    t.equal(rid, requestData, 'id in context and requested data must equal');
                     // console.log('client sent data: ' + requestData + ' for request: ' + rid);
                 });
             });
