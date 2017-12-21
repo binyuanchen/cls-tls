@@ -24,31 +24,31 @@ test("cls + tls without cls-tls patch", function (t) {
         ns.run(function () {
             ns.set('requestId', requestData);
 
-            var tlsSocket = tls.connect(8000, 'localhost', options, function () {
+            tls.connect(8000, 'localhost', options, function () {
                 // without patch, this does not work
                 var rid0 = ns.get('requestId');
                 t.notOk(rid0, 'without patch, connect cb does not work');
                 // console.log('client connected for request: ' + rid0);
 
-                tlsSocket.setEncoding('utf8');
+                this.setEncoding('utf8');
 
-                tlsSocket.on('end', function () {
+                this.on('end', function () {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
                     // console.log('client socket ended [' + rid + ']');
                 });
 
-                tlsSocket.on('data', function (responseData) {
+                this.on('data', function (responseData) {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
                     t.equal(rid, responseData, 'id in context and received data must equal');
                     // console.log('client got data: ' + responseData + ' for request: ' + rid);
-                    tlsSocket.end();
+                    this.end();
                 });
 
-                tlsSocket.write(requestData, 'utf8', function () {
+                this.write(requestData, 'utf8', function () {
                     // without patch, this does not work
                     var rid = ns.get('requestId');
                     t.notOk(rid, 'without patch, write cb does not work');
@@ -89,31 +89,31 @@ test("cls + tls with cls-tls patch", function (t) {
         ns.run(function () {
             ns.set('requestId', requestData);
 
-            var tlsSocket = tls.connect(8000, 'localhost', options, function () {
+            tls.connect(8000, 'localhost', options, function () {
                 // after patch, this works
                 var rid0 = ns.get('requestId');
                 t.ok(rid0, 'after patch, connect cb works');
                 // console.log('client connected for request: ' + rid0);
 
-                tlsSocket.setEncoding('utf8');
+                this.setEncoding('utf8');
 
-                tlsSocket.on('end', function () {
+                this.on('end', function () {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
                     // console.log('client socket ended [' + rid + ']');
                 });
 
-                tlsSocket.on('data', function (responseData) {
+                this.on('data', function (responseData) {
                     // with or without patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'with or without patch, on cb works');
                     t.equal(rid, responseData, 'id in context and received data must equal');
                     // console.log('client got data: ' + responseData + ' for request: ' + rid);
-                    tlsSocket.end();
+                    this.end();
                 });
 
-                tlsSocket.write(requestData, 'utf8', function () {
+                this.write(requestData, 'utf8', function () {
                     // after patch, this works
                     var rid = ns.get('requestId');
                     t.ok(rid, 'after patch, write cb works');
