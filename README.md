@@ -1,9 +1,9 @@
 # cls-tls
 
 
-When using cls [continuation-local-storage](npm-cls) with a node [tls](tls) client [socket](tls-TLSSocket), 
-the cls contexts get lost in some client socket event callbacks (such as [write callback](net-socket-write-event)) 
-and [tls.connect event](tls-connect-event).
+When using cls [continuation-local-storage][npm-cls] with a node [tls][tls] client [socket][tls-TLSSocket], 
+the cls contexts get lost in some client socket event callbacks (such as [write callback][net-socket-write-event]) 
+and [tls.connect event][tls-connect-event].
 
 An example,
 
