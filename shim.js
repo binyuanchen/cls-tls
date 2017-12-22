@@ -8,24 +8,51 @@ function slice(args) {
     return array;
 }
 
-exports = module.exports = function patchTls(ns) {
-    var net = require('net');
-    var proto = net && net.Socket && net.Socket.prototype;
-    /**
-     * wrapping 'connect' is actually not necessary due to its current way of implementation,
-     * however, for future proof, it is wrapped anyway here.
-     *
-     * This shim is for tls/socket client only.
-     */
-    shimmer.massWrap([proto], ['connect', 'write', 'on', 'setTimeout', 'destroy'], function (captured) {
-        return function wrapped() {
-            var args = slice(arguments);
-            var last = args.length - 1;
-            var cb = args[last];
-            if (typeof cb === 'function' && cb) {
-                args[last] = ns.bind(cb);
-            }
-            return captured.apply(this, args);
-        };
-    });
+var _wrapCaptured = function (captured, ns) {
+    return function () {
+        var args = slice(arguments);
+        var last = args.length - 1;
+        var cb = args[last];
+        if (typeof cb === 'function' && cb) {
+            args[last] = ns.bind(cb);
+        }
+        return captured.apply(this, args);
+    };
 };
+
+/**
+ *
+ * If a tls socket is not specified, monkeypatching the net.Socket prototype,
+ * otherwise, monkeypatching the tls socket.
+ *
+ * @param ns The current active cls namespace context that the monkeypatched functions bind to
+ * @param tlsSocket Optionally monkeypatching only a given tls socket
+ */
+var patch = function (ns, tlsSocket) {
+
+    var net = require('net');
+
+    if (net.Socket.prototype._CLS_TLS_PATCHED) {
+        // if tls.TLSSocket prototype prototype is already patched, do not patch repeatedly
+    }
+    else {
+        var tls = require('tls');
+
+        if (tlsSocket && (tlsSocket instanceof tls.TLSSocket)) {
+            shimmer.massWrap([tlsSocket], ['connect', 'write', 'on', 'setTimeout', 'destroy'],
+                function (captured) {
+                    return _wrapCaptured(captured, ns);
+                });
+        }
+        else {
+            var proto = net && net.Socket && net.Socket.prototype;
+            shimmer.massWrap([proto], ['connect', 'write', 'on', 'setTimeout', 'destroy'],
+                function (captured) {
+                    return _wrapCaptured(captured, ns);
+                });
+            net.Socket.prototype._CLS_TLS_PATCHED = 'true';
+        }
+    }
+};
+
+exports = module.exports = patch;
