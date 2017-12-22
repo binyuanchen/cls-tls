@@ -1,11 +1,8 @@
 {
   "name": "cls-tls",
   "version": "0.1.0",
-  "description": "make cls works with a selected set of tls functions",
+  "description": "make node tls socket client work with cls (continuation-local-storage)",
   "main": "shim.js",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "test": "tap test/*.tap.js"
   },
@@ -13,8 +10,14 @@
     "type": "git",
     "url": "git+https://github.com/binyuanchen/cls-tls.git"
   },
+  "keywords": [
+    "continuation-local-storage",
+    "tls",
+    "socket",
+    "shim"
+  ],
   "author": "Binyuan Chen <binyuanchen@gmail.com>",
-  "license": "ISC",
+  "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/binyuanchen/cls-tls/issues"
   },
