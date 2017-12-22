@@ -5,10 +5,13 @@
 
 const tls = require('tls');
 const fs = require('fs');
+const path = require('path');
+
+console.log(__dirname);
 
 const options = {
-    key: fs.readFileSync('server-key.pem'),
-    cert: fs.readFileSync('server-cert.pem'),
+    key: fs.readFileSync(path.join(__dirname, 'server-key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, 'server-cert.pem')),
 
     rejectUnauthorized: true,
 };

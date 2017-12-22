@@ -21,6 +21,23 @@ var _wrapCaptured = function (captured, ns) {
 };
 
 /**
+ * This function patches the tls module. This is pretty much for just patching the tls.connect api. The reason this
+ * is separated from the patch function below is: patchTls normally is combined with patch(ns, tlsSocket) with a
+ * tls socket, but the place of invoking patchTls must happen before a tls socket is created (from tls.connect).
+ * @param ns
+ */
+var patchTls = function (ns) {
+
+    var tls = require('tls');
+
+    if (tls && tls.connect) {
+        shimmer.wrap(tls, 'connect', function (captured) {
+            return _wrapCaptured(captured, ns);
+        });
+    }
+};
+
+/**
  *
  * If a tls socket is not specified, monkeypatching the net.Socket prototype,
  * otherwise, monkeypatching the tls socket.
@@ -39,7 +56,7 @@ var patch = function (ns, tlsSocket) {
         var tls = require('tls');
 
         if (tlsSocket && (tlsSocket instanceof tls.TLSSocket)) {
-            shimmer.massWrap([tlsSocket], ['connect', 'write', 'on', 'setTimeout', 'destroy'],
+            shimmer.massWrap([tlsSocket], ['write', 'on', 'setTimeout', 'destroy'],
                 function (captured) {
                     return _wrapCaptured(captured, ns);
                 });
@@ -55,4 +72,7 @@ var patch = function (ns, tlsSocket) {
     }
 };
 
-exports = module.exports = patch;
+exports = module.exports = {
+    patch: patch,
+    patchTls: patchTls
+};

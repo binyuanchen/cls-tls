@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 var test = require('tap').test;
 
 test("cls + tls without any patching", function (t) {
@@ -11,12 +12,8 @@ test("cls + tls without any patching", function (t) {
     var cls = require('continuation-local-storage');
     var ns = cls.createNamespace('test');
 
-    /**
-     * No patching of tls using this shim
-     */
-
     var options = {
-        ca: [fs.readFileSync('server-cert.pem')]
+        ca: [fs.readFileSync(path.join(__dirname, 'server-cert.pem'))]
     };
 
     var _send_verify = function (requestData) {
@@ -77,7 +74,11 @@ test("cls + tls with instance patching", function (t) {
     /**
      * Patching of tls using this shim
      */
-    var patch = require('../shim');
+    var {patch, patchTls} = require('../shim');
+    /**
+     * this patches the tls module. You should call this before making tls.connect call
+     */
+    patchTls(ns);
 
     var options = {
         ca: [fs.readFileSync('server-cert.pem')]
@@ -85,18 +86,19 @@ test("cls + tls with instance patching", function (t) {
 
     var _send_verify = function (requestData) {
 
-        var tlsSocket = tls.connect(8000, 'localhost', options, function () {
-            // create ns here
-            ns.run(function () {
-                ns.set('requestId', requestData);
+        ns.run(function () {
+            ns.set('requestId', requestData);
 
-                // patch socket instance
-                patch(ns, tlsSocket);
-
+            var tlsSocket = tls.connect(8000, 'localhost', options, function () {
                 // after patch, this works
                 var rid0 = ns.get('requestId');
                 t.ok(rid0, 'after patch, connect cb works');
-                // console.log('client connected for request: ' + rid0);
+                console.log('client connected for request: ' + rid0);
+
+                /**
+                 * this patches the tls socket. This should be combined with the patchTls as shown above.
+                 */
+                patch(ns, tlsSocket);
 
                 tlsSocket.setEncoding('utf8');
 
@@ -124,6 +126,7 @@ test("cls + tls with instance patching", function (t) {
                     // console.log('client sent data: ' + requestData + ' for request: ' + rid);
                 });
             });
+
         });
     };
 
@@ -142,11 +145,11 @@ test("cls + tls with prototype patching", function (t) {
     var cls = require('continuation-local-storage');
     var ns = cls.createNamespace('test');
 
+    var {patch, patchTls} = require('../shim');
     /**
-     * Patching of tls using this shim
+     * this patches the net.Socket prototype, this means all client sockets created from tls are patched.
      */
-    var patchTls = require('../shim');
-    patchTls(ns);
+    patch(ns);
 
     var options = {
         ca: [fs.readFileSync('server-cert.pem')]
@@ -156,7 +159,6 @@ test("cls + tls with prototype patching", function (t) {
 
         ns.run(function () {
             ns.set('requestId', requestData);
-
 
             var tlsSocket = tls.connect(8000, 'localhost', options, function () {
                 // after patch, this works
