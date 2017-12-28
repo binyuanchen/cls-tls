@@ -51,7 +51,7 @@ test("cls + tls without patching", function (t) {
                     // testing the renegotiate api before closing the socket
                     tlsSocket.renegotiate(renegotiateOptions, function (err) {
                         var rid2 = ns.get('requestId');
-                        t.notOk(rid2, 'without patching, renegotiate cb still works');
+                        t.notOk(rid2, 'without patching, renegotiate cb does not work');
                         // console.log('client renegotiate completed, rid2: ' + rid2 + ', err: ' + err);
 
                         tlsSocket.end();
