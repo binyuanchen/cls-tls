@@ -61,8 +61,7 @@ test("cls + tls without any patching", function (t) {
     }
 });
 
-
-test("cls + tls with instance patching", function (t) {
+test("cls + tls with patching", function (t) {
     t.plan(60);
 
     var fs = require('fs');
@@ -71,85 +70,11 @@ test("cls + tls with instance patching", function (t) {
     var cls = require('continuation-local-storage');
     var ns = cls.createNamespace('test');
 
-    /**
-     * Patching of tls using this shim
-     */
-    var {patch, patchTls} = require('../shim');
-    /**
-     * this patches the tls module. You should call this before making tls.connect call
-     */
-    patchTls(ns);
-
-    var options = {
-        ca: [fs.readFileSync('server-cert.pem')]
-    };
-
-    var _send_verify = function (requestData) {
-
-        ns.run(function () {
-            ns.set('requestId', requestData);
-
-            var tlsSocket = tls.connect(8000, 'localhost', options, function () {
-                // after patch, this works
-                var rid0 = ns.get('requestId');
-                t.ok(rid0, 'after patch, connect cb works');
-                console.log('client connected for request: ' + rid0);
-
-                /**
-                 * this patches the tls socket. This should be combined with the patchTls as shown above.
-                 */
-                patch(ns, tlsSocket);
-
-                tlsSocket.setEncoding('utf8');
-
-                tlsSocket.on('end', function () {
-                    // with or without patch, this works
-                    var rid = ns.get('requestId');
-                    t.ok(rid, 'with or without patch, on cb works');
-                    // console.log('client socket ended [' + rid + ']');
-                });
-
-                tlsSocket.on('data', function (responseData) {
-                    // with or without patch, this works
-                    var rid = ns.get('requestId');
-                    t.ok(rid, 'with or without patch, on cb works');
-                    t.equal(rid, responseData, 'id in context and received data must equal');
-                    // console.log('client got data: ' + responseData + ' for request: ' + rid);
-                    tlsSocket.end();
-                });
-
-                tlsSocket.write(requestData, 'utf8', function () {
-                    // after patch, this works
-                    var rid = ns.get('requestId');
-                    t.ok(rid, 'after patch, write cb works');
-                    t.equal(rid, requestData, 'id in context and requested data must equal');
-                    // console.log('client sent data: ' + requestData + ' for request: ' + rid);
-                });
-            });
-
-        });
-    };
-
-    // run test
-    for (var i = 0; i < 10; i++) {
-        _send_verify('' + i);
-    }
-});
-
-test("cls + tls with prototype patching", function (t) {
-    t.plan(60);
-
-    var fs = require('fs');
-
-    var tls = require('tls');
-    var cls = require('continuation-local-storage');
-    var ns = cls.createNamespace('test');
-
-    var {patch, patchTls} = require('../shim');
+    var patchTls = require('../shim');
     /**
      * this patches the net.Socket prototype, this means all client sockets created from tls are patched.
      */
-    patch(ns);
+    patchTls(ns);
 
     var options = {
         ca: [fs.readFileSync('server-cert.pem')]

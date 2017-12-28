@@ -1,6 +1,6 @@
 'use strict';
 
-var shimmer = require('shimmer');
+const shimmer = require('shimmer');
 
 function slice(args) {
     var length = args.length, array = [], i;
@@ -8,6 +8,13 @@ function slice(args) {
     return array;
 }
 
+/**
+ * An internal helper function to patch a callback-at-last function.
+ * @param captured
+ * @param ns
+ * @returns {Function}
+ * @private
+ */
 var _wrapCaptured = function (captured, ns) {
     return function () {
         var args = slice(arguments);
@@ -21,9 +28,9 @@ var _wrapCaptured = function (captured, ns) {
 };
 
 /**
- * This function patches the tls module. This is pretty much for just patching the tls.connect api. The reason this
- * is separated from the patch function below is: patchTls normally is combined with patch(ns, tlsSocket) with a
- * tls socket, but the place of invoking patchTls must happen before a tls socket is created (from tls.connect).
+ * Calling this patches the tls module connect method first. It also defines patcher
+ * function that patches the tls.TLSSocket instance generated at runtime as part of
+ * the call to the tls.connect method.
  * @param ns
  */
 var patchTls = function (ns) {
@@ -31,48 +38,25 @@ var patchTls = function (ns) {
     var tls = require('tls');
 
     if (tls && tls.connect) {
-        shimmer.wrap(tls, 'connect', function (captured) {
-            return _wrapCaptured(captured, ns);
+        shimmer.wrap(tls, 'connect', function (tls_connect) {
+            return function () {
+                var args = slice(arguments);
+                var last = args.length - 1;
+                var cb = args[last];
+                if (typeof cb === 'function' && cb) {
+                    args[last] = ns.bind(cb);
+                }
+                var tlsSocket = tls_connect.apply(this, args);
+                if (tlsSocket && tlsSocket instanceof tls.TLSSocket) {
+                    ns.bindEmitter(tlsSocket);
+                    shimmer.wrap(tlsSocket, '_writeGeneric', function (tlsSocket_writeGeneric) {
+                        return _wrapCaptured(tlsSocket_writeGeneric, ns);
+                    });
+                }
+                return tlsSocket;
+            };
         });
     }
 };
 
-/**
- *
- * If a tls socket is not specified, monkeypatching the net.Socket prototype,
- * otherwise, monkeypatching the tls socket.
- *
- * @param ns The current active cls namespace context that the monkeypatched functions bind to
- * @param tlsSocket Optionally monkeypatching only a given tls socket
- */
-var patch = function (ns, tlsSocket) {
-
-    var net = require('net');
-
-    if (net.Socket.prototype._CLS_TLS_PATCHED) {
-        // if tls.TLSSocket prototype prototype is already patched, do not patch repeatedly
-    }
-    else {
-        var tls = require('tls');
-
-        if (tlsSocket && (tlsSocket instanceof tls.TLSSocket)) {
-            shimmer.massWrap([tlsSocket], ['write', 'on', 'setTimeout', 'destroy'],
-                function (captured) {
-                    return _wrapCaptured(captured, ns);
-                });
-        }
-        else {
-            var proto = net && net.Socket && net.Socket.prototype;
-            shimmer.massWrap([proto], ['connect', 'write', 'on', 'setTimeout', 'destroy'],
-                function (captured) {
-                    return _wrapCaptured(captured, ns);
-                });
-            net.Socket.prototype._CLS_TLS_PATCHED = 'true';
-        }
-    }
-};
-
-exports = module.exports = {
-    patch: patch,
-    patchTls: patchTls
-};
+exports = module.exports = patchTls;
