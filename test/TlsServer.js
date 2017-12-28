@@ -7,7 +7,9 @@ const tls = require('tls');
 const fs = require('fs');
 const path = require('path');
 
-console.log(__dirname);
+// discourage tls to report DOS attacks because the client (tap tests) will send aggressively
+tls.CLIENT_RENEG_LIMIT = 1000;
+tls.CLIENT_RENEG_WINDOW = 60;
 
 const options = {
     key: fs.readFileSync(path.join(__dirname, 'server-key.pem')),
