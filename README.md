@@ -22,11 +22,13 @@ ns.run(function () {
 ```
 
 This shim cls-tls monkeypatches the node tls module and/or tls.TLSSocket socket instances. 
-The goal is to make cls and tls socket client work nicely.
+The goal is to make tls socket client work with cls namespace/context.
 
-### Usage example
-This patches the net.Socket prototype (using shim api patch(ns)) so that every new tls client socket works with cls in 
-its event callbacks.
+### Usage example - if you create tls socket using "tls.connect"
+If you are using convenient tls module api "tls.connect" to make tls connection, use this shim 
+api 'patchTls(ns)'. Calling this api patches the tls module method tls.connect so it works with 
+cls namespace/context, the tls socket created as result of calling tls.connect is also patched 
+so it works with cls namespace/context.
 
 An example,
 
@@ -35,7 +37,7 @@ var tls = require('tls');
 var cls = require('continuation-local-storage');
 var ns = cls.createNamespace('test');
 
-var patchTls = require('cls-tls');
+var { patchTls } = require('cls-tls');
 patchTls(ns);
 
 ns.run(function () {
@@ -49,7 +51,38 @@ ns.run(function () {
 });
 ```
 
-For a formal example see test/client_patch.tap.js file.
+### Usage example - if you create tls socket using "new tls.TLSSocket"
+If you are creating tls.TLSSocket instance using "new tls.TLSSocket" to make tls connection, 
+use this shim api 'patchTls(ns, tlsSocket)'. Calling this api patches the passed-in tls socket  
+so it works with cls namespace/context.
+
+An example,
+
+```js
+var tls = require('tls');
+var cls = require('continuation-local-storage');
+var ns = cls.createNamespace('test');
+
+var { patchTls } = require('cls-tls');
+
+ns.run(function () {
+  ns.set('id', '1');
+  
+  var tlsOptions = {...};
+  var tlsSocket = new tls.TLSSocket(undefined, tlsOptions);
+  
+  patchTls(ns, tlsSocket); // patching this single pre-allocated tls client socket
+  
+  tlsSocket.connect({ port: 8000, host: 'localhost' });
+  
+  tlsSocket.write('hello node!', 'utf8', function () {
+    var id = ns.get('id');
+    assert.equal(id, '1'); // pass
+  });
+});
+```
+
+For more formal examples, please see test/*.tap.js files.
 
 ### Tests
 
