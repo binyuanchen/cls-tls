@@ -180,8 +180,7 @@ test("cls + tls with patching, using socket creation", function (t) {
     var cls = require('continuation-local-storage');
     var ns = cls.createNamespace('test');
 
-    var {patchTls, patchTlsSocket} = require('../shim');
-    // patchTls(ns);
+    var { patchTls } = require('../shim');
 
     var _send_verify = function (requestData) {
 
@@ -217,7 +216,7 @@ test("cls + tls with patching, using socket creation", function (t) {
                 requestOCSP: options.requestOCSP
             });
 
-            patchTlsSocket(ns, tlsSocket);
+            patchTls(ns, tlsSocket);
 
             tlsSocket[kConnectOptions] = options;
 
