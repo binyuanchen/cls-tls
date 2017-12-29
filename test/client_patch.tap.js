@@ -84,7 +84,7 @@ test("cls + tls with patching", function (t) {
     var cls = require('continuation-local-storage');
     var ns = cls.createNamespace('test');
 
-    var patchTls = require('../shim');
+    var { patchTls } = require('../shim');
     /**
      * this patches the net.Socket prototype, this means all client sockets created from tls are patched.
      */
